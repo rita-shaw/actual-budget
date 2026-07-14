@@ -1,0 +1,5 @@
+{
+  "port": 5006,
+  "hostname": "0.0.0.0",
+  "dataDir": "/home/biscuit/.openclaw/workspace/actual-budget/data"
+}
