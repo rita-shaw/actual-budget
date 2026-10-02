@@ -1,0 +1,16 @@
+[Unit]
+Description=Actual Budget Server
+After=network.target
+
+[Service]
+Type=exec
+User=biscuit
+WorkingDirectory=/home/biscuit/configs/actual-budget
+Environment=NODE_VERSION=default
+Environment=COREPACK_HOME=/home/biscuit/configs/actual-budget/.cache/corepack
+ExecStart=/home/biscuit/.config/nvm/nvm-exec corepack yarn start:server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

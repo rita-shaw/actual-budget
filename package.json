@@ -1,0 +1,11 @@
+{
+  "name": "actual-budget-service",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "scripts": {
+    "start:server": "actual-server --config ./config.json"
+  },
+  "dependencies": {
+    "@actual-app/sync-server": "26.5.2"
+  }
+}

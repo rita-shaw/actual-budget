@@ -1,5 +1,3 @@
 #!/bin/bash
 # Actual Budget Service Setup
-echo "Installing Actual Budget dependencies..."
-# Add commands to install/configure as needed
-# ...
+exec bash "$(dirname -- "$0")/scripts/setup.sh"
