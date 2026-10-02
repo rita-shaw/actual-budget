@@ -45,7 +45,7 @@ DNS is a proxied `CNAME` from `budget.badmath.org` to
 `<TUNNEL_ID>.cfargotunnel.com`, created by
 `cloudflared tunnel route dns spaceforce budget.badmath.org`. Because the record is
 proxied, public resolvers return Cloudflare edge addresses
-(`104.21.47.189`, `172.67.150.144`, TTL 300) rather than the `CNAME` target.
+(two Cloudflare anycast addresses, TTL 300) rather than the `CNAME` target.
 
 On the `spaceforce` LAN the configured resolver is the LAN router (`<LAN_RESOLVER>`), and
 it may serve a cached `NXDOMAIN` for a newly created hostname while the apex and
@@ -55,7 +55,7 @@ confirm against authority and bypass the cache to test:
 ```bash
 dig @annalise.ns.cloudflare.com +short budget.badmath.org   # ground truth
 dig @1.1.1.1 +short budget.badmath.org
-curl -sS --resolve budget.badmath.org:443:104.21.47.189 https://budget.badmath.org/info
+curl -sS --resolve budget.badmath.org:443:<EDGE_IP> https://budget.badmath.org/info
 ```
 
 ### Placeholders
@@ -68,6 +68,8 @@ placeholders. Resolve them on the host rather than storing them here:
 | `<TUNNEL_ID>` | `cloudflared tunnel list`, or the `tunnel:` key in `~/.cloudflared/config.yml` |
 | `<ACCESS_AUD>` | Zero Trust dashboard (Access > Applications), or the `aud` claim in the `302` redirect from the hostname |
 | `<LAN_RESOLVER>` | `scutil --dns \| awk '/nameserver\[0\]/{print $3; exit}'` on macOS |
+| `<TEAM_DOMAIN>` | Zero Trust dashboard (Settings > Custom Pages), or the `Location` header of the `302` from the hostname |
+| `<EDGE_IP>` | `dig +short budget.badmath.org` — proxied records return Cloudflare anycast addresses that rotate |
 
 Credentials are never in this repository: the tunnel credentials JSON and the
 account `cert.pem` live only in `~/.cloudflared/` on the host, mode `600`.
@@ -87,10 +89,13 @@ datasets at random. Only one host may own `budget.badmath.org` at a time.
 ### Direct exposure
 
 Both hosts bind Actual to `0.0.0.0:5006`, so each also accepts direct
-connections wherever the host firewall permits. On `rita.shaw` that has
-historically meant `http://159.54.167.172:5006` — plaintext HTTP, so the Actual
-password and all budget data traverse the network unencrypted. Prefer the
-tunnel, which terminates TLS at Cloudflare. Narrowing either host's `hostname`
+connections wherever the host firewall permits. Earlier revisions of this file
+recorded a specific public address for `rita.shaw`; that value was stale and did
+not correspond to a live endpoint, so determine a host's actually reachable
+addresses on the host itself rather than trusting an address written here. Any
+such direct access is plaintext HTTP, which puts the Actual password and all
+budget data on the network unencrypted. Prefer the tunnel, which terminates TLS
+at Cloudflare. Narrowing either host's `hostname`
 to `127.0.0.1` closes direct access and leaves the tunnel as the only ingress;
 cloudflared connects to the local listener and is unaffected.
 
@@ -102,7 +107,7 @@ this tunnel setup. Unauthenticated requests never reach the tunnel; the edge
 answers `302` to the team login page with
 `www-authenticate: Cloudflare-Access`:
 
-- Team domain: `badmath.cloudflareaccess.com`
+- Team domain: `<TEAM_DOMAIN>`
 - Application `aud`: `<ACCESS_AUD>`
 - Resource metadata: `https://budget.badmath.org/.well-known/cloudflare-access-protected-resource/`
 
